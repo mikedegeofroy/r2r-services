@@ -1,13 +1,20 @@
 from flask import current_app as app, request, jsonify
 import os
-import openai
+from openai import OpenAI
+
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the OpenAI API key from environment variables
+api_key = os.getenv('OPENAI_API_KEY')
+
+client = OpenAI(api_key=api_key)
 from werkzeug.utils import secure_filename
 
-# Set your OpenAI API key here
-openai.api_key = 'your_openai_api_key'
-
 # Define a list of tags you want to use
-PREDEFINED_TAGS = ['tag1', 'tag2', 'tag3', 'tag4']
+PREDEFINED_TAGS = ['feat', 'bug']
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -35,50 +42,47 @@ def upload_file():
     """
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
-    
+
     file = request.files['file']
-    
+
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
-    
+
     if file:
         filename = secure_filename(file.filename)
         file_path = os.path.join('/tmp', filename)
         file.save(file_path)
-        
+
         try:
-            # Transcribe the audio file using OpenAI's new transcription API
             with open(file_path, 'rb') as audio_file:
-                response = openai.Audio.create(
-                    file=audio_file,
-                    model="whisper-1"
-                )
-                transcription = response['text']
+                response = client.audio.transcriptions.create(file=audio_file,
+                model="whisper-1")
+                transcription = response.text
 
             # Translate the transcription using OpenAI's GPT-4
-            translation_prompt = f"Translate the following text to English:\n\n{transcription}"
-            translation_response = openai.Completion.create(
-                model="text-davinci-003",
-                prompt=translation_prompt,
-                max_tokens=1000
-            )
-            translation = translation_response.choices[0].text.strip()
+            translation_prompt = f"Translate the following text to Russian:\n\n{transcription}"
+            translation_response = client.chat.completions.create(model="gpt-4o-mini",
+              messages=[
+              {"role": "system", "content": "You are a translator. You're translating feedback from a game based in the 90s."},
+              {"role": "user", "content": translation_prompt}
+            ],)
+            translation = translation_response.choices[0].message.content.strip()
 
-            # Generate tags for the translated text using OpenAI's GPT-4
-            # tags_prompt = f"Generate tags for the following text from a predefined list of tags:\n\n{translation}\n\nTags: {', '.join(PREDEFINED_TAGS)}"
-            # tags_response = openai.Completion.create(
-            #     model="text-davinci-003",
-            #     prompt=tags_prompt,
-            #     max_tokens=100
-            # )
-            # tags = [tag.strip() for tag in tags_response.choices[0].text.strip().split(',')]
+
+            tags_response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+              {"role": "system", "content": f"Generate tags for the following text from a predefined list of tags:\n\n\n\nTags: {', '.join(PREDEFINED_TAGS)}. Answer only with a comma separated list of tags."},
+              {"role": "user", "content": translation}
+            ],)
+            tags = [tag.strip() for tag in tags_response.choices[0].message.content.strip().split(',')]
 
             return jsonify({
                 'transcription': transcription,
                 'translation': translation,
-                # 'tags': tags
+                'tags': tags
             })
-        
+
         except Exception as e:
             return jsonify({'error': str(e)}), 500
         finally:
