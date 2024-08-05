@@ -59,7 +59,6 @@ def upload_file():
                 model="whisper-1")
                 transcription = response.text
 
-            # Translate the transcription using OpenAI's GPT-4
             translation_prompt = f"Translate the following text to Russian:\n\n{transcription}"
             translation_response = client.chat.completions.create(model="gpt-4o-mini",
               messages=[
