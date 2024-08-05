@@ -16,7 +16,7 @@ PREDEFINED_TAGS = ['feat', 'bug']
 @generate.route('/upload', methods=['POST'])
 @swag_from({
     'tags': ['Avatar'],
-    'summary': 'Upload an audio file for generation',
+    'summary': 'Upload an image for transformation',
     'parameters': [
         {
             'name': 'file',
