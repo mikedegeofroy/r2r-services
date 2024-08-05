@@ -1,6 +1,7 @@
 from flask import Flask
 from flasgger import Swagger
-from .routes import transcribe, generate
+from app.transcribe import transcribe
+from app.generate import generate
 
 def create_app():
     app = Flask(__name__)
