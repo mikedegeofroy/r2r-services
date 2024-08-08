@@ -1,21 +1,16 @@
-from flask import request, jsonify, Blueprint
+from app.generate import generate, comfyui, s3
+from flask import request, jsonify
 import os
 from openai import OpenAI
 from werkzeug.utils import secure_filename
-from dotenv import load_dotenv
 from flasgger import swag_from
-import base64
-from app.generate import generate
 
-load_dotenv()
 api_key = os.getenv('OPENAI_API_KEY')
-
 client = OpenAI(api_key=api_key)
-PREDEFINED_TAGS = ['feat', 'bug']
 
 @generate.route('/upload', methods=['POST'])
 @swag_from({
-    'tags': ['Avatar'],
+    'tags': ['Generation'],
     'summary': 'Upload an image for transformation',
     'parameters': [
         {
@@ -59,7 +54,9 @@ def generator_upload_file():
 
         try:
             with open(file_path, 'rb') as image_file:
-                b64image = base64.b64encode(image_file.read()).decode('utf-8');
+                _, file_extension = os.path.splitext(file_path)
+                url = s3.upload(image_file, file_extension)
+
                 description_response = client.chat.completions.create(
                     model="gpt-4o-mini",
                     messages=[
@@ -72,7 +69,7 @@ def generator_upload_file():
                               {
                                 "type": "image_url",
                                 "image_url": {
-                                  "url": f"data:image/jpeg;base64,{b64image}"
+                                  "url": url
                                 }
                               }
                             ]
@@ -81,8 +78,14 @@ def generator_upload_file():
                 )
                 description = description_response.choices[0].message.content.strip()
 
+
+            response = comfyui.generate_image(url, description)
+            print(response.json())
+
             return jsonify({
-                'src': description,
+                "prompt_id": response.json()['prompt_id'],
+                "original_image": url,
+                "descripion": description,
             })
 
         except Exception as e:
@@ -91,3 +94,67 @@ def generator_upload_file():
             os.remove(file_path)
 
     return jsonify({'error': 'File upload failed'}), 500
+
+@generate.route('/status', methods=['GET'])
+@swag_from({
+    'tags': ['Generation'],
+    'summary': 'Check the status of a generation task',
+    'parameters': [
+        {
+            'name': 'prompt_id',
+            'in': 'query',
+            'type': 'string',
+            'required': True,
+            'description': 'The unique identifier for the generation task'
+        }
+    ],
+    'responses': {
+        '200': {
+            'description': 'Returns the status of the generation task along with the URL to the image if available',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'prompt_id': {
+                        'type': 'string',
+                        'description': 'The unique identifier for the generation task'
+                    },
+                    'url': {
+                        'type': 'string',
+                        'description': 'URL to the generated image if available, otherwise empty'
+                    },
+                    'status': {
+                        'type': 'string',
+                        'description': 'Status of the generation task',
+                        'enum': ['InProgress', 'Completed', 'Failed']
+                    }
+                },
+                'examples': {
+                    'application/json': {
+                        'prompt_id': 'f455d0ae-0bf0-4830-8fd7-1cb2c12b7089',
+                        'url': 'https://r2r-comfyui.s3.amazonaws.com/your-image',
+                        'status': 'Completed'
+                    }
+                }
+            }
+        },
+        '400': {
+            'description': 'Invalid request parameters'
+        },
+        '404': {
+            'description': 'Prompt ID not found or no image available'
+        },
+        '500': {
+            'description': 'Internal server error'
+        }
+    }
+})
+def get_generation_status():
+    prompt_id = request.args.get('prompt_id')
+
+    url = comfyui.get_result(prompt_id)
+
+    return jsonify({
+        "prompt_id": prompt_id,
+        "url": url,
+        "status": "InProgress"
+    })
