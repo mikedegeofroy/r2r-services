@@ -5,6 +5,9 @@ from openai import OpenAI
 from werkzeug.utils import secure_filename
 from flasgger import swag_from
 
+# TODO
+# fix the returns in /status, make sure to handle errors
+
 api_key = os.getenv('OPENAI_API_KEY')
 client = OpenAI(api_key=api_key)
 
@@ -61,7 +64,7 @@ def generator_upload_file():
                     model="gpt-4o-mini",
                     messages=[
                         {
-                            "role": "system", "content": "Please provide a description of a person using the following format: \n [hair color], [hairstyle], [body type], [facial hair], [hair type] \n Where: \n Hair Color options: brown hair, blonde hair, black hair, old hair, white hair, blue hair, etc. \n Hairstyle options: bald, very short hair, short hair, medium hair, long hair \n Body Type options: skinny body, average body, athletic body, fat body \n Facial Hair options: clean shaven, stubble, goatee, beard, moustache, large beard \n Hair Type options: curly hair, wavy hair, normal hair \n Example format: brown hair, short hair, average body, beard, curly hair"
+                            "role": "system", "content": "Do not try to find out who the person is, just provide a description of a person using the following format: \n [hair color], [hairstyle], [body type], [facial hair], [hair type] \n Where: \n Hair Color options: brown hair, blonde hair, black hair, old hair, white hair, blue hair, etc. \n Hairstyle options: bald, very short hair, short hair, medium hair, long hair \n Body Type options: skinny body, average body, athletic body, fat body \n Facial Hair options: clean shaven, stubble, goatee, beard, moustache, large beard \n Hair Type options: curly hair, wavy hair, normal hair \n Example format: brown hair, short hair, average body, beard, curly hair \n Don't output anything else other than the description in the correct format."
                         },
                         {
                             "role": "user", 
@@ -78,9 +81,7 @@ def generator_upload_file():
                 )
                 description = description_response.choices[0].message.content.strip()
 
-
             response = comfyui.generate_image(url, description)
-            print(response.json())
 
             return jsonify({
                 "prompt_id": response.json()['prompt_id'],
@@ -151,10 +152,16 @@ def generator_upload_file():
 def get_generation_status():
     prompt_id = request.args.get('prompt_id')
 
-    url = comfyui.get_result(prompt_id)
+    try:
+        url = comfyui.get_result(prompt_id)
 
-    return jsonify({
-        "prompt_id": prompt_id,
-        "url": url,
-        "status": "InProgress"
-    })
+        return jsonify({
+            "prompt_id": prompt_id,
+            "url": url,
+            "status": "Done"
+        })
+    except:
+        return jsonify({
+            "prompt_id": prompt_id,
+            "status": "InProgress"
+        })

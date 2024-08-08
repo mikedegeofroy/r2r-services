@@ -3,6 +3,8 @@ import requests
 from app.generate import s3 
 import os
 
+# TODO
+# When getting status, parse errors & pending
 
 comfyui_url = os.getenv('COMFYUI_URL')
 url = '{}/prompt'.format(comfyui_url)
@@ -17,7 +19,7 @@ def get_image(filename, subfolder, folder_type):
     return response.content
 
 def get_result(prompt_id):
-    url = f"https://nzzsj20e6zbae1-3000.proxy.runpod.net/history/{prompt_id}"
+    url = f"{comfyui_url}/history/{prompt_id}"
     
     try:
         # Send a request to fetch the status

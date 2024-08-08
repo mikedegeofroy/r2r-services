@@ -268,7 +268,7 @@ payload_template = {
     },
     "1106": {
       "inputs": {
-        "Text": "trk style, 1boy, (low-poly:1.2),painting, male focus, solo, black background, black jacket, (black hair, skinny body, beard, normal hair, medium hair:1.2), (low contrast:1.2), (angry face, intense gaze:1.25) rough man, simple background, (((soft light))), looking at viewer, upper body"
+        "Text": "trk style, 1boy, (low-poly:1.2),painting, male focus, solo, black background, black jacket, ({DESCRIPTION}:1.2), (low contrast:1.2), (angry face, intense gaze:1.25) rough man, simple background, (((soft light))), looking at viewer, upper body"
       },
       "class_type": "DF_Text_Box"
     },
