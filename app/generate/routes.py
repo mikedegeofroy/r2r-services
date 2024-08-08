@@ -81,14 +81,13 @@ def generator_upload_file():
                 )
                 description = description_response.choices[0].message.content.strip()
 
-            response = comfyui.generate_image(url, description)
+                response = comfyui.generate_image(url, description)
 
-            return jsonify({
-                "prompt_id": response.json()['prompt_id'],
-                "original_image": url,
-                "descripion": description,
-            })
-
+                return jsonify({
+                    "prompt_id": response.json()['prompt_id'],
+                    "original_image": url,
+                    "descripion": description,
+                })
         except Exception as e:
             return jsonify({'error': str(e)}), 500
         finally:
