@@ -1,10 +1,12 @@
-from app.transcribe import transcribe
+from app.transcribe import transcribe, telegram
 from flask import request, jsonify, Blueprint
 import os
 from openai import OpenAI
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 from flasgger import swag_from
+import asyncio
+
 
 load_dotenv()
 api_key = os.getenv('OPENAI_API_KEY')
@@ -63,24 +65,37 @@ def transcribe_upload_file():
                 response = client.audio.transcriptions.create(file=audio_file, model="whisper-1")
                 transcription = response.text
 
-            translation_prompt = f"Translate the following text to Russian:\n\n{transcription}"
-            translation_response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "You are a translator. You're translating feedback from a game based in the 90s."},
-                    {"role": "user", "content": translation_prompt}
-                ]
-            )
-            translation = translation_response.choices[0].message.content.strip()
+                shorten_prompt = f"Translate the following text to Russian:\n\n{transcription}"
+                translation_response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are a translator. You're translating feedback from a game based in the 90s."},
+                        {"role": "user", "content": shorten_prompt}
+                    ]
+                )
+                translation = translation_response.choices[0].message.content.strip()
 
-            tags_response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": f"Generate tags for the following text from a predefined list of tags:\n\n\n\nTags: {', '.join(PREDEFINED_TAGS)}. Do not output anything else than a comma separated list of tags."},
-                    {"role": "user", "content": translation}
-                ]
-            )
-            tags = [tag.strip() for tag in tags_response.choices[0].message.content.strip().split(',')]
+                shorten_prompt = f"Сократи этот текст и выдели главную идею:\n\n{transcription}"
+                shorten_response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "Ты сокращаешь тексты и выделяешь главныую суть, ты не выводишь ничего кроме сути текста, никаких лишних слов."},
+                        {"role": "user", "content": shorten_prompt}
+                    ]
+                )
+                shorten = shorten_response.choices[0].message.content.strip()
+
+                tags_response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": f"Generate tags for the following text from a predefined list of tags:\n\n\n\nTags: {', '.join(PREDEFINED_TAGS)}. Do not output anything else than a comma separated list of tags."},
+                        {"role": "user", "content": translation}
+                    ]
+                )
+                tags = [tag.strip() for tag in tags_response.choices[0].message.content.strip().split(',')]
+
+                asyncio.run(telegram.send_feedback("**тэги:** {}\n**краткое содержание: {}**".format(', '.join(tags), shorten)))
+                asyncio.run(telegram.send_audio(audio_file))
 
             return jsonify({
                 'transcription': transcription,

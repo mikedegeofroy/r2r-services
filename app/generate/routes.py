@@ -83,8 +83,10 @@ def generator_upload_file():
 
                 response = comfyui.generate_image(url, description)
 
+                print(response)
+
                 return jsonify({
-                    "prompt_id": response.json()['prompt_id'],
+                    "prompt_id": response.json(),
                     "original_image": url,
                     "descripion": description,
                 })
