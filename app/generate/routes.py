@@ -10,7 +10,6 @@ from flasgger import swag_from
 
 api_key = os.getenv('OPENAI_API_KEY')
 client = OpenAI(api_key=api_key)
-
 @generate.route('/upload', methods=['POST'])
 @swag_from({
     'tags': ['Generation'],
@@ -22,11 +21,18 @@ client = OpenAI(api_key=api_key)
             'type': 'file',
             'required': True,
             'description': 'The image file to be transformed'
+        },
+        {
+            'name': 'color',
+            'in': 'query',
+            'type': 'string',
+            'required': False,
+            'description': 'The desired color for the transformation'
         }
     ],
     'responses': {
         '200': {
-            'description': 'Generates a avatar for the image of the user',
+            'description': 'Generates an avatar for the image of the user',
             'examples': {
                 'application/json': {
                     'src': 'url to the image',
@@ -49,6 +55,8 @@ def generator_upload_file():
 
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
+
+    color = request.args.get('color', None)  # Extract color from query parameters
 
     if file:
         filename = secure_filename(file.filename)
@@ -81,7 +89,7 @@ def generator_upload_file():
                 )
                 description = description_response.choices[0].message.content.strip()
 
-                response = comfyui.generate_image(url, description)
+                response = comfyui.generate_image(url, description, color)
 
                 print(response)
 
@@ -96,6 +104,7 @@ def generator_upload_file():
             os.remove(file_path)
 
     return jsonify({'error': 'File upload failed'}), 500
+
 
 @generate.route('/status', methods=['GET'])
 @swag_from({

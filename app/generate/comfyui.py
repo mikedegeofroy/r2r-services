@@ -9,8 +9,8 @@ import os
 comfyui_url = os.getenv('COMFYUI_URL')
 url = '{}/prompt'.format(comfyui_url)
 
-def generate_image(image_url, image_description):
-  return requests.post(url, json=payload.generate_payload(image_url, image_description))
+def generate_image(image_url, image_description, color):
+  return requests.post(url, json=payload.generate_payload(image_url, image_description, color))
 
 def get_image(filename, subfolder, folder_type):
     params = {"filename": filename, "subfolder": subfolder, "type": folder_type}
