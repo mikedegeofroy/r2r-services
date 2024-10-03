@@ -294,7 +294,7 @@ payload_template = {
       },
       "1106": {
         "inputs": {
-          "Text": "trk style, 1boy, (low-poly:1.2),painting, male focus, solo, black background, {JACKET_COLOR} jacket, ({DESCRIPTION}:1.2), (low contrast:1.2), (angry face, intense gaze:0.75) rough man, simple background, (((soft light))), looking at viewer, upper body"
+          "Text": "trk style, 1boy, (low-poly:1.2),painting, male focus, solo, black background, {JACKET_COLOR} jacket, ({DESCRIPTION}:1.2), (low contrast:1.2), (angry face, intense gaze:{AGRESSION}) rough man, simple background, (((soft light))), looking at viewer, upper body"
         },
         "class_type": "DF_Text_Box"
       },
@@ -628,19 +628,23 @@ payload_template = {
   }
 }
 
-def generate_payload(image_url, description, jacket_color, background_color):
+def generate_payload(image_url, description, jacket_color, background_color, agression, strength):
     # Create a copy of the template to avoid modifying the original
     payload = payload_template.copy()
 
     # Replacing the description with the description of the person
     payload["input"]["workflow"]["1106"]["inputs"]["Text"] = payload["input"]["workflow"]["1106"]["inputs"][
         "Text"
-    ].replace("{DESCRIPTION}", description)
+    ].replace("{DESCRIPTION}", f"{strength}, {description}")
     
     # Jacket Color
     payload["input"]["workflow"]["1106"]["inputs"]["Text"] = payload["input"]["workflow"]["1106"]["inputs"][
         "Text"
     ].replace("{JACKET_COLOR}", jacket_color)
+    
+    payload["input"]["workflow"]["1106"]["inputs"]["Text"] = payload["input"]["workflow"]["1106"]["inputs"][
+        "Text"
+    ].replace("{AGRESSION}", agression)
     
     
     # Setting bg color

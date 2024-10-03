@@ -110,6 +110,20 @@ def upload_file():
             'type': 'string',
             'required': False,
             'description': 'The background color as a hex string, defaults to None'
+        },
+        {
+            'name': 'agression',
+            'in': 'query',  # Remains in query as it is optional
+            'type': 'string',
+            'required': False,
+            'description': 'The background color as a hex string, defaults to None'
+        },
+        {
+            'name': 'strength',
+            'in': 'query',  # Remains in query as it is optional
+            'type': 'string',
+            'required': False,
+            'description': 'The background color as a hex string, defaults to None'
         }
     ],
     'consumes': [
@@ -138,6 +152,8 @@ def generate_image():
     data = request.json  # get JSON data from the POST request body
     color = data.get('color')
     background_color = data.get('backgroundColor', None)  # Get the background color
+    strength = data.get('strength')
+    agression = data.get('agression')
     url = data.get('url')
 
     if not url:
@@ -149,7 +165,7 @@ def generate_image():
             model="gpt-4o-mini",
             messages=[
                 {
-                    "role": "system", "content": "Do not try to find out who the person is, just provide a description of a person using the following format: \n [hair color], [hairstyle], [body type], [facial hair], [hair type] \n Where: \n Hair Color options: brown hair, blonde hair, black hair, old hair, white hair, blue hair, etc. \n Hairstyle options: bald, very short hair, short hair, medium hair, long hair \n Body Type options: skinny body, average body, athletic body, fat body \n Facial Hair options: clean shaven, stubble, goatee, beard, moustache, large beard \n Hair Type options: curly hair, wavy hair, normal hair \n Example format: brown hair, short hair, average body, beard, curly hair \n Don't output anything else other than the description in the correct format."
+                    "role": "system", "content": "Do not try to find out who the person is, just provide a description of a person using the following format: \n [hair color], [hairstyle], [facial hair], [hair type] \n Where: \n Hair Color options: brown hair, blonde hair, black hair, old hair, white hair, blue hair, etc. \n Hairstyle options: bald, very short hair, short hair, medium hair, long hair \n Facial Hair options: clean shaven, stubble, goatee, beard, moustache, large beard \n Hair Type options: curly hair, wavy hair, normal hair \n Example format: brown hair, short hair, average body, beard, curly hair \n Don't output anything else other than the description in the correct format."
                 },
                 {
                     "role": "user", 
@@ -160,7 +176,7 @@ def generate_image():
         description = description_response.choices[0].message.content.strip()
 
         # Use ComfyUI to generate the image based on the description and URL
-        response = comfyui.generate_image(url, description, color, background_color)
+        response = comfyui.generate_image(url, description, color, background_color, agression, strength)
 
         return jsonify({
             "id": response.json()["id"],

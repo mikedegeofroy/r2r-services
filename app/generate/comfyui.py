@@ -11,10 +11,10 @@ headers = {
     "authorization": f"Bearer {api_key}"
 }
 
-def generate_image(image_url, image_description, color, background_color):
+def generate_image(image_url, image_description, color, background_color, agression, strength):
     url = f"https://api.runpod.ai/v2/{endpoint_id}/run"
     
-    return requests.post(url, json=payload.generate_payload(image_url, image_description, color, background_color), headers=headers)
+    return requests.post(url, json=payload.generate_payload(image_url, image_description, color, background_color, agression, strength), headers=headers)
 
 def get_result(request_id):
     url = f"https://api.runpod.ai/v2/{endpoint_id}/status/{request_id}"
