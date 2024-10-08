@@ -13,11 +13,15 @@ headers = {
 
 def generate_image(image_url, image_description, color, background_color, agression, strength):
     url = f"https://api.runpod.ai/v2/{endpoint_id}/run"
+    # url = f"https://m9kpme5jn02zeb-8000.proxy.runpod.net/run"
     
-    return requests.post(url, json=payload.generate_payload(image_url, image_description, color, background_color, agression, strength), headers=headers)
+    json = payload.generate_payload(image_url, image_description, color, background_color, agression, strength)
+    
+    return requests.post(url, json=json, headers=headers)
 
 def get_result(request_id):
     url = f"https://api.runpod.ai/v2/{endpoint_id}/status/{request_id}"
+    # url = f"https://m9kpme5jn02zeb-8000.proxy.runpod.net/status/{request_id}"
 
     try:
         # Send a GET request to check the status of the image generation
@@ -30,16 +34,20 @@ def get_result(request_id):
         # Handle the different statuses
         status = data.get("status")
         
+        print(status)
+        
         if status == "IN_QUEUE":
             return {
+                "status": "InQueue",
+            }
+        elif status == "IN_PROGRESS":
+            return {
                 "status": "InProgress",
-                "url": None  # No URL since it's still processing
             }
         
         elif status == "FAILED":
             return {
                 "status": "Failed",
-                "url": None  # No URL since the task failed
             }
 
         elif status == "COMPLETED":

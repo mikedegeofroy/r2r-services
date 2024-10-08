@@ -83,47 +83,41 @@ def upload_file():
     'summary': 'Generate an image based on the uploaded image URL',
     'parameters': [
         {
-            'name': 'url',
-            'in': 'body',  # 'json' changed to 'body' to match request payload
+            'name': 'body',
+            'in': 'body',  # Use 'body' for the entire payload
             'required': True,
             'schema': {
                 'type': 'object',
                 'properties': {
                     'url': {
                         'type': 'string',
-                        'description': 'The URL of the uploaded image'
+                        'description': 'The URL of the uploaded image',
+                        'example': 'https://example.com/image.jpg'
+                    },
+                    'color': {
+                        'type': 'string',
+                        'description': 'The desired color for the transformation',
+                        'example': 'blue'
+                    },
+                    'background_color': {
+                        'type': 'string',
+                        'description': 'The background color as a hex string, defaults to None',
+                        'example': '#FFFFFF'
+                    },
+                    'agression': {
+                        'type': 'string',
+                        'description': 'The aggression level for the transformation (optional)',
+                        'example': 'high'
+                    },
+                    'strength': {
+                        'type': 'string',
+                        'description': 'The strength of the transformation effect (optional)',
+                        'example': 'medium'
                     }
-                }
+                },
+                'required': ['url', 'color']  # Mark 'url' and 'color' as required
             },
-            'description': 'The JSON body containing the URL of the uploaded image'
-        },
-        {
-            'name': 'color',
-            'in': 'query',  # Remains in query as it is optional
-            'type': 'string',
-            'required': True,
-            'description': 'The desired color for the transformation'
-        },
-        {
-            'name': 'background_color',
-            'in': 'query',  # Remains in query as it is optional
-            'type': 'string',
-            'required': False,
-            'description': 'The background color as a hex string, defaults to None'
-        },
-        {
-            'name': 'agression',
-            'in': 'query',  # Remains in query as it is optional
-            'type': 'string',
-            'required': False,
-            'description': 'The background color as a hex string, defaults to None'
-        },
-        {
-            'name': 'strength',
-            'in': 'query',  # Remains in query as it is optional
-            'type': 'string',
-            'required': False,
-            'description': 'The background color as a hex string, defaults to None'
+            'description': 'The JSON body containing the URL and transformation parameters'
         }
     ],
     'consumes': [
@@ -263,28 +257,22 @@ def get_generation_status():
                 "url": base_url,
                 "status": "Completed"
             }), 200
-        elif result["status"] == "InProgress":
-            parsed_url = urlparse(result["url"])
-            base_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
-            
+        elif result["status"] == "InQueue":
             return jsonify({
                 "id": request_id,
-                "url": base_url,  # Still None at this stage
+                "status": "InQueue"
+            }), 200
+        elif result["status"] == "InProgress":
+            return jsonify({
+                "id": request_id,
                 "status": "InProgress"
             }), 200
         elif result["status"] == "Failed":
-            parsed_url = urlparse(result["url"])
-            base_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
-
             return jsonify({
                 "id": request_id,
-                "url": base_url,
                 "status": "Failed"
             }), 200
         else:
-            parsed_url = urlparse(result["url"])
-            base_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
-
             return jsonify({
                 "id": request_id,
                 "status": result["status"],  # Handle unknown or error statuses
