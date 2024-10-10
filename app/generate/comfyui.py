@@ -17,6 +17,8 @@ def generate_image(image_url, image_description, color, background_color, agress
     
     json = payload.generate_payload(image_url, image_description, color, background_color, agression, strength)
     
+    print(json)
+    
     return requests.post(url, json=json, headers=headers)
 
 def get_result(request_id):
@@ -33,8 +35,6 @@ def get_result(request_id):
 
         # Handle the different statuses
         status = data.get("status")
-        
-        print(status)
         
         if status == "IN_QUEUE":
             return {

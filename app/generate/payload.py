@@ -1,3 +1,4 @@
+from copy import deepcopy
 import uuid
 
 payload_template = {
@@ -630,7 +631,7 @@ payload_template = {
 
 def generate_payload(image_url, description, jacket_color, background_color, agression, strength):
     # Create a copy of the template to avoid modifying the original
-    payload = payload_template.copy()
+    payload = deepcopy(payload_template)
 
     # Replacing the description with the description of the person
     payload["input"]["workflow"]["1106"]["inputs"]["Text"] = payload["input"]["workflow"]["1106"]["inputs"][
@@ -644,8 +645,7 @@ def generate_payload(image_url, description, jacket_color, background_color, agr
     
     payload["input"]["workflow"]["1106"]["inputs"]["Text"] = payload["input"]["workflow"]["1106"]["inputs"][
         "Text"
-    ].replace("{AGRESSION}", agression)
-    
+    ].replace("{AGRESSION}", str(agression))
     
     # Setting bg color
     
