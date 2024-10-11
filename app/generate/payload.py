@@ -649,7 +649,9 @@ def generate_payload(image_url, description, jacket_color, background_color, agr
     
     # Setting bg color
     
-    if (background_color == None):
+    print(background_color)
+    
+    if (background_color == 'transparent'):
       payload["input"]["workflow"]["1254"]["inputs"]["images"] = ["1231", 0]
     else:
       payload["input"]["workflow"]["1230"]["inputs"]["color"] = background_color
