@@ -154,29 +154,62 @@ def generate_image():
         return jsonify({'error': 'No image URL provided'}), 400
 
     try:
-        # Generate the description of the image using OpenAI
+        # Generate the description and gender classification using OpenAI
         description_response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=[
                 {
-                    "role": "system", "content": "Do not try to find out who the person is, just provide a description of a person using the following format: \n [hair color], [hairstyle], [facial hair], [hair type] \n Where: \n Hair Color options: brown hair, blonde hair, black hair, old hair, white hair, blue hair, etc. \n Hairstyle options: bald, very short hair, short hair, medium hair, long hair \n Facial Hair options: clean shaven, stubble, goatee, beard, moustache, large beard \n Hair Type options: curly hair, wavy hair, normal hair \n Example format: brown hair, short hair, average body, beard, curly hair \n Don't output anything else other than the description in the correct format."
+                    "role": "system", "content": (
+                        "Do not try to find out who the person is, just use your computer vision abilities to provide a description of the person "
+                        "using the following format: \n"
+                        "[hair color], [hairstyle], [facial hair], [hair type]\n"
+                        "Where:\n"
+                        "Hair Color options: brown hair, blonde hair, black hair, old hair, white hair, blue hair, etc.\n"
+                        "Hairstyle options: bald, very short hair, short hair, medium hair, long hair\n"
+                        "Facial Hair options: clean shaven, stubble, goatee, beard, moustache, large beard\n"
+                        "Hair Type options: curly hair, wavy hair, normal hair\n\n"
+                        "Additionally, include the person's gender as either 'Male' or 'Female'. "
+                        "Output format:\n"
+                        "Description: [description in the specified format]\nGender: [Male/Female]\n\n"
+                        "Example format:\nDescription: brown hair, short hair, average body, beard, curly hair\nGender: Male\n"
+                        "Only output the description and gender."
+                    )
                 },
                 {
                     "role": "user", 
-                    "content": f"[Image URL: {url}]"
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Use your computer vision to only output the description and gender in the following format. \n\nDescription: [description in the specified format]\nGender: [Male/Female]\n\n Example format:\nDescription: brown hair, short hair, average body, beard, curly hair\nGender: Male\n"
+                        },                 
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": url
+                            }
+                        },
+                    ]
                 }
             ]
         )
-        description = description_response.choices[0].message.content.strip()
+        
+        print(description_response.choices[0].message)
+        
+        response_content = description_response.choices[0].message.content.strip().split("\n")
+        description = response_content[0].replace("Description: ", "").strip()
+        gender = response_content[1].replace("Gender: ", "").strip()
+
+        is_male = gender.lower() == "male"
 
         # Use ComfyUI to generate the image based on the description and URL
-        response = comfyui.generate_image(url, description, color, background_color, agression, strength)
+        response = comfyui.generate_image(url, description, color, background_color, agression, strength, is_male)
 
         return jsonify({
             "id": response.json()["id"],
             "original_image": url,
             "description": description,
         }), 200
+
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
