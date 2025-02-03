@@ -156,7 +156,7 @@ def generate_image():
     try:
         # Generate the description and gender classification using OpenAI
         description_response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system", "content": (
@@ -185,7 +185,8 @@ def generate_image():
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": url
+                                "url": url,
+                                "detail": "auto"
                             }
                         },
                     ]
@@ -202,7 +203,7 @@ def generate_image():
         is_male = gender.lower() == "male"
 
         # Use ComfyUI to generate the image based on the description and URL
-        response = comfyui.generate_image(url, description, color, background_color, agression, strength, is_male)
+        response = comfyui.generate_image(url, description, color, background_color, agression, strength, False, is_male)
 
         return jsonify({
             "id": response.json()["id"],
