@@ -572,13 +572,13 @@
       },
       "1251": {
         "inputs": {
-          "url_or_path": "https://r2r-comfyui.s3.amazonaws.com/assets/ipAdapter.png"
+          "url_or_path": "https://storage.yandexcloud.net/roll-to-rule-s3/assets/ipAdapter.png"
         },
         "class_type": "LoadImageFromUrlOrPath"
       },
       "1252": {
         "inputs": {
-          "url_or_path": "https://r2r-comfyui.s3.amazonaws.com/assets/keyPointImage.png"
+          "url_or_path": "https://storage.yandexcloud.net/roll-to-rule-s3/assets/keyPointImage.png"
         },
         "class_type": "LoadImageFromUrlOrPath"
       },
